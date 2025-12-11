@@ -34,13 +34,22 @@ from ui.rastreabilidade_publica_arquivo import (
 # Verificar query parameter
 query_params = st.query_params
 
-if "palete" in query_params:
-    # Página de consulta de palete específico
-    codigo_palete = query_params.get("palete", "").strip()
-    if codigo_palete:
-        pagina_consulta_publica_arquivo(codigo_palete)
-    else:
-        pagina_consulta_publica_landing_arquivo()
+# Obter código do palete
+codigo_palete = None
+
+# Tentar obter o parâmetro 'palete'
+try:
+    if "palete" in query_params:
+        codigo_palete = str(query_params.get("palete", "")).strip()
+        if not codigo_palete:
+            codigo_palete = None
+except Exception:
+    codigo_palete = None
+
+# Se encontrou código do palete, mostrar página completa
+if codigo_palete:
+    pagina_consulta_publica_arquivo(codigo_palete)
 else:
     # Página inicial (landing page)
     pagina_consulta_publica_landing_arquivo()
+
