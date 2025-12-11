@@ -1,0 +1,5 @@
+# Dependências mínimas para a página pública de rastreabilidade
+# Apenas Streamlit é necessário (sem banco de dados, sem módulos internos)
+
+streamlit>=1.28.0
+
