@@ -133,11 +133,54 @@ def pagina_consulta_publica_arquivo(codigo_palete: str):
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .stDeployButton {visibility: hidden;}
-    /* Reduzir espaçamento geral - colar no topo */
+    /* Remover completamente espaçamento no topo - MÁXIMO */
     .main .block-container {
         padding-top: 0rem !important;
         padding-bottom: 0.3rem !important;
+        margin-top: -8rem !important;
         max-width: 1200px;
+    }
+    /* Remover espaçamento do header do Streamlit */
+    header[data-testid="stHeader"] {
+        height: 0rem !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: none !important;
+    }
+    /* Remover margem do primeiro elemento */
+    .main .block-container > div:first-child {
+        margin-top: 0rem !important;
+        padding-top: 0rem !important;
+    }
+    /* Remover qualquer espaçamento superior */
+    .main > div:first-child {
+        margin-top: 0rem !important;
+        padding-top: 0rem !important;
+    }
+    /* Remover espaçamento do body */
+    body {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Remover espaçamento do app */
+    #root {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Remover espaçamento de todos os elementos markdown no topo */
+    .main .block-container .element-container:first-child {
+        margin-top: 0rem !important;
+        padding-top: 0rem !important;
+    }
+    /* Remover espaçamento do stApp */
+    [data-testid="stApp"] {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    /* Remover espaçamento do stAppViewContainer */
+    [data-testid="stAppViewContainer"] {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
     /* Reduzir espaçamento entre elementos */
     .element-container {
@@ -187,6 +230,11 @@ def pagina_consulta_publica_arquivo(codigo_palete: str):
     </style>
     """, unsafe_allow_html=True)
     
+    # Se não tiver código de palete, mostrar erro
+    if not codigo_palete or codigo_palete.strip() == "":
+        st.error("❌ Código do palete não informado. Acesse via QR code ou informe o código na URL: ?palete=CODIGO")
+        return
+    
     # Buscar dados do arquivo
     dados = buscar_palete_por_codigo(codigo_palete)
     
@@ -207,7 +255,7 @@ def pagina_consulta_publica_arquivo(codigo_palete: str):
     empresa_cidade = dados.get('empresa_cidade', '')
     empresa_estado = dados.get('empresa_estado', '')
     
-    # Logo e nome da empresa no topo - Logo à esquerda, retângulo vermelho à direita
+    # Logo, nome da empresa e QR Code no topo
     projeto_root = Path(__file__).parent.parent
     logo_path = projeto_root / "nova_logo_bananal.png"
     
@@ -222,11 +270,20 @@ def pagina_consulta_publica_arquivo(codigo_palete: str):
     else:
         logo_html = '<div style="font-size: 40px; margin-bottom: 2px;">🍌</div>'
     
-    # Container único com flexbox para alinhar logo e retângulo no topo
+    # Preparar QR Code para o header (mesmo tamanho da logo)
+    qr_code_url = dados.get('qr_code_url')
+    qr_code_html = ""
+    if qr_code_url:
+        try:
+            qr_code_html = f'<img src="{qr_code_url}" style="width: 150px; height: auto; display: block;" alt="QR Code">'
+        except:
+            qr_code_html = ""
+    
+    # Container com flexbox: Logo à esquerda, texto no meio, QR Code à direita
     st.markdown(
         f"""
-        <div style="display: flex; align-items: flex-start; gap: 15px; margin-bottom: 5px;">
-            <div style="flex-shrink: 0;">
+        <div style="display: flex; align-items: flex-start; gap: 15px; margin-top: 0px !important; margin-bottom: 5px; padding-top: 0px !important;">
+            <div style="flex-shrink: 0; align-self: flex-start;">
                 {logo_html}
             </div>
             <div style="flex: 1; padding: 15px 20px;">
@@ -239,6 +296,9 @@ def pagina_consulta_publica_arquivo(codigo_palete: str):
                 <div id="header-texto-origem" style="font-size: 20px !important; font-weight: 700 !important; color: #666 !important; line-height: 1.4 !important;">
                     Origem garantida, da colheita até a gôndola do supermercado.
                 </div>
+            </div>
+            <div style="flex-shrink: 0; align-self: flex-start;">
+                {qr_code_html}
             </div>
         </div>
         """,
@@ -365,193 +425,13 @@ def pagina_consulta_publica_arquivo(codigo_palete: str):
         except Exception as e:
             pass
     
-    # QR Code + Compartilhar (lado a lado) - Layout compacto
-    st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
-    
-    col_qr, col_share = st.columns([1, 2])
-    
-    with col_qr:
-        st.markdown("#### 🔍 QR Code")
-        qr_code_url = dados.get('qr_code_url')
-        qr_png_bytes = None
-        
-        if qr_code_url:
-            try:
-                st.image(qr_code_url, width=130)
-                # Tentar extrair bytes do QR code para download
-                if "," in qr_code_url:
-                    import base64
-                    qr_png_bytes = base64.b64decode(qr_code_url.split(",", 1)[1])
-            except:
-                st.info("QR Code disponível")
-        else:
-            st.info("QR Code não disponível")
-        
-        # Botões de download do QR (compactos)
-        if qr_png_bytes:
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                st.download_button(
-                    "📥 PNG",
-                    data=qr_png_bytes,
-                    file_name=f"{codigo_palete_display}_qr.png",
-                    mime="image/png",
-                    use_container_width=True,
-                )
-            with col_btn2:
-                try:
-                    from io import BytesIO
-                    from PIL import Image
-                    pdf_buffer = BytesIO()
-                    Image.open(BytesIO(qr_png_bytes)).save(pdf_buffer, format="PDF", resolution=300.0)
-                    pdf_buffer.seek(0)
-                    st.download_button(
-                        "📄 PDF",
-                        data=pdf_buffer,
-                        file_name=f"{codigo_palete_display}_qr.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                    )
-                except:
-                    pass
-    
-    with col_share:
-        st.markdown("#### 📣 Compartilhar")
-        try:
-            from core.config import Config
-            share_url = f"{Config.get_rastreabilidade_url_base()}?palete={codigo_palete_display}"
-        except:
-            # Fallback: usar URL relativa se não conseguir obter URL base
-            share_url = f"?palete={codigo_palete_display}"
-        
-        st.text_input("Link público", value=share_url, disabled=True, key="link_publico_compacto", label_visibility="collapsed")
-        
-        escaped_url = share_url.replace("'", "\\'")
-        components.html(
-            f"""
-            <button onclick="navigator.clipboard.writeText('{escaped_url}'); 
-                              const msg = document.getElementById('copy-status-compacto');
-                              if (msg) {{ msg.innerText='Link copiado!'; msg.style.opacity=1; setTimeout(()=>msg.style.opacity=0.2, 2000); }}">
-                📋 Copiar link
-            </button>
-            <style>
-                button {{
-                    background-color: #2d8659;
-                    color: white;
-                    border: none;
-                    padding: 6px 14px;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    margin-top: 3px;
-                    font-size: 12px;
-                    width: 100%;
-                }}
-                button:hover {{
-                    background-color: #1e5d3f;
-                }}
-            </style>
-            """,
-            height=45,
-        )
-        st.caption("Copie e compartilhe o link com clientes e parceiros.")
-        st.markdown("<span id='copy-status-compacto' style='color:#2d8659; font-weight:bold; opacity:0.2; font-size:11px;'></span>", unsafe_allow_html=True)
-    
     # Footer compacto
     st.markdown("---")
     st.markdown(
         """
         <div style="text-align: center; padding: 8px; color: #2d8659; font-size: 11px;">
             <p style="margin: 0;"><strong>🍌 Banana Rastreada na Origem</strong></p>
-            <p style="margin: 2px 0 0 0;">Sistema de Rastreabilidade</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def pagina_consulta_publica_landing_arquivo():
-    """Página inicial (quando não há código de palete)"""
-    
-    # Ocultar menu e rodapé
-    st.markdown("""
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {visibility: hidden;}
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Header
-    st.markdown(
-        """
-        <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%); 
-                    color: white; border-radius: 10px; margin-bottom: 25px;">
-            <h1 style="margin: 0; font-size: 28px;">🍌 Rastreabilidade de Banana</h1>
-            <p style="margin: 5px 0 0 0; font-size: 14px;">Origem rastreada desde o talhão</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    
-    # Verificar se arquivo existe
-    projeto_root = Path(__file__).parent.parent
-    arquivo_json = projeto_root / "dados_rastreabilidade.json"
-    arquivo_txt = projeto_root / "dados_rastreabilidade.txt"
-    
-    if not arquivo_json.exists() and not arquivo_txt.exists():
-        st.warning("⚠️ Arquivo de dados não encontrado. Execute o script de exportação primeiro.")
-        st.info("Execute: `python scripts/exportar_dados_rastreabilidade.py`")
-        return
-    
-    # Formulário de busca
-    st.markdown("### 🔍 Consultar Palete")
-    st.info("💡 Escaneie o QR code na etiqueta do palete ou digite o código manualmente.")
-    
-    codigo_palete_input = st.text_input(
-        "Código do Palete:",
-        placeholder="Ex: PAL-20251111-010",
-        key="busca_publica_landing",
-    )
-    
-    codigo_palete = codigo_palete_input.strip().upper() if codigo_palete_input else ""
-    
-    if st.button("🔍 Consultar", type="primary", use_container_width=True, key="btn_consultar_landing"):
-        if codigo_palete:
-            st.query_params["palete"] = codigo_palete
-            st.rerun()
-        else:
-            st.error("❌ Por favor, informe o código do palete.")
-    
-    # Informações sobre o sistema
-    st.markdown("---")
-    st.markdown("### ℹ️ Sobre o Sistema")
-    st.markdown(
-        """
-        Este sistema permite rastrear a origem de cada palete de banana desde o talhão de cultivo.
-        
-        **O que você pode verificar:**
-        - 📦 Código do palete e lote
-        - 🌱 Talhão de origem
-        - 📅 Data de corte
-        - 🍌 Variedade da banana
-        - 🗺️ Localização exata do talhão no mapa
-        
-        **Como usar:**
-        1. Escaneie o QR code na etiqueta do palete
-        2. Ou digite o código do palete no campo acima
-        3. Visualize todas as informações de rastreabilidade
-        """
-    )
-    
-    # Footer
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style="text-align: center; padding: 20px; color: #2d8659; font-size: 14px;">
-            <p><strong>🍌 Banana Rastreada na Origem</strong></p>
-            <p>Sistema de Rastreabilidade - Fazenda Bananas Prata Ouro</p>
+            <p style="margin: 2px 0 0 0;">Sistema de Rastreabilidade Desenvolvido por Helder Leandro</p>
         </div>
         """,
         unsafe_allow_html=True,
