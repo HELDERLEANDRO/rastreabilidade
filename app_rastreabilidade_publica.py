@@ -26,10 +26,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Importar página pública
-from ui.rastreabilidade_publica_arquivo import (
-    pagina_consulta_publica_arquivo,
-    pagina_consulta_publica_landing_arquivo
-)
+from ui.rastreabilidade_publica_arquivo import pagina_consulta_publica_arquivo
 
 # Verificar query parameter
 query_params = st.query_params
@@ -46,10 +43,7 @@ try:
 except Exception:
     codigo_palete = None
 
-# Se encontrou código do palete, mostrar página completa
-if codigo_palete:
-    pagina_consulta_publica_arquivo(codigo_palete)
-else:
-    # Página inicial (landing page)
-    pagina_consulta_publica_landing_arquivo()
+# Sempre mostrar a página completa (mesma página)
+# Se não tiver código, a função tratará internamente
+pagina_consulta_publica_arquivo(codigo_palete if codigo_palete else "")
 
