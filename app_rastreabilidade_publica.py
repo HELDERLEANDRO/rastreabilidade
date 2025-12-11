@@ -44,4 +44,3 @@ if "palete" in query_params:
 else:
     # Página inicial (landing page)
     pagina_consulta_publica_landing_arquivo()
-
